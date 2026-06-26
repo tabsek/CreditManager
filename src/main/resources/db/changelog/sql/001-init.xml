@@ -1,0 +1,111 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="ILYA (generated)" id="1782457455190-1">
+        <createTable tableName="client_statuses">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="client_statusesPK"/>
+            </column>
+            <column name="name" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ILYA (generated)" id="1782457455190-2">
+        <createTable tableName="clients">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="clientsPK"/>
+            </column>
+            <column name="birth_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="first_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="middle_name" type="VARCHAR(100)"/>
+            <column name="passport_number" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ILYA (generated)" id="1782457455190-3">
+        <createTable tableName="currencies">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="currenciesPK"/>
+            </column>
+            <column name="code" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ILYA (generated)" id="1782457455190-4">
+        <createTable tableName="loan_statuses">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="loan_statusesPK"/>
+            </column>
+            <column name="name" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ILYA (generated)" id="1782457455190-5">
+        <createTable tableName="loans">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="loansPK"/>
+            </column>
+            <column name="amount" type="numeric(38, 0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="interest_rate" type="numeric(5, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="loan_number" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="monthly_payment" type="numeric(18, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="term_months" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ILYA (generated)" id="1782457455190-6">
+        <addUniqueConstraint columnNames="email" constraintName="UC_CLIENTSEMAIL_COL" tableName="clients"/>
+    </changeSet>
+    <changeSet author="ILYA (generated)" id="1782457455190-7">
+        <addUniqueConstraint columnNames="passport_number" constraintName="UC_CLIENTSPASSPORT_NUMBER_COL" tableName="clients"/>
+    </changeSet>
+    <changeSet author="ILYA (generated)" id="1782457455190-8">
+        <addUniqueConstraint columnNames="loan_number" constraintName="UC_LOANSLOAN_NUMBER_COL" tableName="loans"/>
+    </changeSet>
+    <changeSet author="ILYA (generated)" id="1782457455190-9">
+        <addForeignKeyConstraint baseColumnNames="client_id" baseTableName="loans" constraintName="FK254skrmnbf97halpb2eqmnd44" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="clients" validate="true"/>
+    </changeSet>
+    <changeSet author="ILYA (generated)" id="1782457455190-10">
+        <addForeignKeyConstraint baseColumnNames="status" baseTableName="clients" constraintName="FK8yt81p0akjtsb98cmtq971qvn" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="client_statuses" validate="true"/>
+    </changeSet>
+    <changeSet author="ILYA (generated)" id="1782457455190-11">
+        <addForeignKeyConstraint baseColumnNames="currency" baseTableName="loans" constraintName="FKg6s24tdxvwtsue457qhdrj96q" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="currencies" validate="true"/>
+    </changeSet>
+    <changeSet author="ILYA (generated)" id="1782457455190-12">
+        <addForeignKeyConstraint baseColumnNames="status" baseTableName="loans" constraintName="FKjqmnpgsdluiwt6uflmj8nyd2w" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="loan_statuses" validate="true"/>
+    </changeSet>
+</databaseChangeLog>
