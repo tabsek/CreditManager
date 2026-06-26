@@ -6,5 +6,5 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
     <include file="db/changelog/sql/001-init.xml"/>
-
+    <include file="db/changelog/sql/002-insert-reference-data.sql"/>
 </databaseChangeLog>
