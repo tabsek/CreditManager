@@ -7,4 +7,5 @@
 
     <include file="db/changelog/sql/001-init.xml"/>
     <include file="db/changelog/sql/002-insert-reference-data.sql"/>
+    <include file="db/changelog/sql/003-insert-test-data.sql"/>
 </databaseChangeLog>
