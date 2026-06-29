@@ -2,10 +2,8 @@ package ru.ilya.power.creditmanager.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import ru.ilya.power.creditmanager.dto.client.ClientCardDto;
 import ru.ilya.power.creditmanager.dto.client.ClientDto;
 import ru.ilya.power.creditmanager.service.ClientService;
 
@@ -31,5 +29,10 @@ public class ClientController {
                 lastName != null ? lastName : "",
                 firstName != null ? firstName : ""
         ));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ClientCardDto> getClientCard(@PathVariable Long id) {
+        return ResponseEntity.ok(clientService.getClientCard(id));
     }
 }
