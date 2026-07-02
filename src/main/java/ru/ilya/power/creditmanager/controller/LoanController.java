@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.ilya.power.creditmanager.dto.loan.CreateLoanRequest;
 import ru.ilya.power.creditmanager.dto.loan.LoanDto;
+import ru.ilya.power.creditmanager.dto.loan.UpdateLoanRequest;
 import ru.ilya.power.creditmanager.service.LoanService;
 
 @RestController
@@ -24,5 +25,13 @@ public class LoanController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(loanService.createLoan(clientId, request));
+    }
+
+    @PatchMapping("/{loanId}")
+    public ResponseEntity<LoanDto> updateLoan(
+            @PathVariable Long loanId,
+            @RequestBody UpdateLoanRequest request
+    ) {
+        return ResponseEntity.ok(loanService.updateLoan(loanId, request));
     }
 }
