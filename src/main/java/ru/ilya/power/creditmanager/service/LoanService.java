@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.ilya.power.creditmanager.dto.loan.CreateLoanRequest;
 import ru.ilya.power.creditmanager.dto.loan.LoanDto;
+import ru.ilya.power.creditmanager.dto.loan.UpdateLoanRequest;
 import ru.ilya.power.creditmanager.entity.Client;
 import ru.ilya.power.creditmanager.entity.Currency;
 import ru.ilya.power.creditmanager.entity.Loan;
@@ -11,6 +12,7 @@ import ru.ilya.power.creditmanager.entity.LoanStatus;
 import ru.ilya.power.creditmanager.exception.ClientNotActiveException;
 import ru.ilya.power.creditmanager.exception.ClientNotFoundException;
 import ru.ilya.power.creditmanager.exception.DuplicateLoanNumberException;
+import ru.ilya.power.creditmanager.exception.LoanNotFoundException;
 import ru.ilya.power.creditmanager.mapper.LoanMapper;
 import ru.ilya.power.creditmanager.repository.ClientRepository;
 import ru.ilya.power.creditmanager.repository.CurrencyRepository;
@@ -54,6 +56,29 @@ public class LoanService {
         loan.setClient(client);
         loan.setCurrency(currency);
         loan.setStatus(draftStatus);
+
+        Loan savedLoan = loanRepository.save(loan);
+        return loanMapper.toDto(savedLoan);
+    }
+
+    public LoanDto updateLoan(Long loanId, UpdateLoanRequest request) {
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new LoanNotFoundException(loanId));
+
+        if (request.getAmount() != null) {
+            loan.setAmount(request.getAmount());
+        }
+
+        if (request.getInterestRate() != null) {
+            loan.setInterestRate(request.getInterestRate());
+        }
+
+        if (request.getStatus() != null) {
+            LoanStatus loanStatus = loanStatusRepository.findByName(request.getStatus())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Unknown status: " + request.getStatus()));
+            loan.setStatus(loanStatus);
+        }
 
         Loan savedLoan = loanRepository.save(loan);
         return loanMapper.toDto(savedLoan);

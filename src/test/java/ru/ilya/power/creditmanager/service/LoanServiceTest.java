@@ -7,10 +7,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.ilya.power.creditmanager.dto.loan.CreateLoanRequest;
 import ru.ilya.power.creditmanager.dto.loan.LoanDto;
+import ru.ilya.power.creditmanager.dto.loan.UpdateLoanRequest;
 import ru.ilya.power.creditmanager.entity.*;
 import ru.ilya.power.creditmanager.exception.ClientNotActiveException;
 import ru.ilya.power.creditmanager.exception.ClientNotFoundException;
 import ru.ilya.power.creditmanager.exception.DuplicateLoanNumberException;
+import ru.ilya.power.creditmanager.exception.LoanNotFoundException;
 import ru.ilya.power.creditmanager.mapper.LoanMapper;
 import ru.ilya.power.creditmanager.repository.ClientRepository;
 import ru.ilya.power.creditmanager.repository.CurrencyRepository;
@@ -125,6 +127,78 @@ class LoanServiceTest {
         assertThatThrownBy(() -> loanService.createLoan(1L, request))
                 .isInstanceOf(DuplicateLoanNumberException.class)
                 .hasMessageContaining("LN-2024-001");
+    }
+
+    @Test
+    void updateLoan_success() {
+        LoanStatus activeStatus = new LoanStatus();
+        activeStatus.setName("ACTIVE");
+
+        Loan loan = new Loan();
+        loan.setId(1L);
+        loan.setAmount(BigInteger.valueOf(100000));
+
+        UpdateLoanRequest request = new UpdateLoanRequest();
+        request.setAmount(BigInteger.valueOf(200000));
+        request.setInterestRate(BigDecimal.valueOf(15.0));
+        request.setStatus("ACTIVE");
+
+        LoanDto expectedDto = new LoanDto();
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanStatusRepository.findByName("ACTIVE")).thenReturn(Optional.of(activeStatus));
+        when(loanRepository.save(any())).thenReturn(loan);
+        when(loanMapper.toDto(loan)).thenReturn(expectedDto);
+
+        LoanDto result = loanService.updateLoan(1L, request);
+
+        assertThat(result).isEqualTo(expectedDto);
+    }
+
+    @Test
+    void updateLoan_loanNotFound() {
+        when(loanRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> loanService.updateLoan(99L, new UpdateLoanRequest()))
+                .isInstanceOf(LoanNotFoundException.class)
+                .hasMessageContaining("99");
+    }
+
+    @Test
+    void updateLoan_unknownStatus() {
+        Loan loan = new Loan();
+        loan.setId(1L);
+
+        UpdateLoanRequest request = new UpdateLoanRequest();
+        request.setStatus("UNKNOWN");
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanStatusRepository.findByName("UNKNOWN")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> loanService.updateLoan(1L, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("UNKNOWN");
+    }
+
+    @Test
+    void updateLoan_partialUpdate_onlyAmount() {
+        Loan loan = new Loan();
+        loan.setId(1L);
+        loan.setAmount(BigInteger.valueOf(100000));
+
+        UpdateLoanRequest request = new UpdateLoanRequest();
+        request.setAmount(BigInteger.valueOf(300000));
+
+        LoanDto expectedDto = new LoanDto();
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.save(any())).thenReturn(loan);
+        when(loanMapper.toDto(loan)).thenReturn(expectedDto);
+
+        LoanDto result = loanService.updateLoan(1L, request);
+
+        assertThat(result).isEqualTo(expectedDto);
+        assertThat(loan.getAmount()).isEqualTo(BigInteger.valueOf(300000));
     }
 
 }
