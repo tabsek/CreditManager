@@ -58,4 +58,11 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(ex.getMessage()));
     }
+
+    @ExceptionHandler(LoanAlreadyClosedException.class)
+    public ResponseEntity<ErrorResponse> handleLoanAlreadyClosed(LoanAlreadyClosedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
 }

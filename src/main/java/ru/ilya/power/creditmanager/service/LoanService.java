@@ -9,10 +9,7 @@ import ru.ilya.power.creditmanager.entity.Client;
 import ru.ilya.power.creditmanager.entity.Currency;
 import ru.ilya.power.creditmanager.entity.Loan;
 import ru.ilya.power.creditmanager.entity.LoanStatus;
-import ru.ilya.power.creditmanager.exception.ClientNotActiveException;
-import ru.ilya.power.creditmanager.exception.ClientNotFoundException;
-import ru.ilya.power.creditmanager.exception.DuplicateLoanNumberException;
-import ru.ilya.power.creditmanager.exception.LoanNotFoundException;
+import ru.ilya.power.creditmanager.exception.*;
 import ru.ilya.power.creditmanager.mapper.LoanMapper;
 import ru.ilya.power.creditmanager.repository.ClientRepository;
 import ru.ilya.power.creditmanager.repository.CurrencyRepository;
@@ -25,6 +22,7 @@ public class LoanService {
 
     private static final String CLIENT_STATUS_ACTIVE = "ACTIVE";
     private static final String CLIENT_STATUS_DRAFT = "DRAFT";
+    private static final String STATUS_CLOSED = "CLOSED";
 
     private final LoanRepository loanRepository;
     private final ClientRepository clientRepository;
@@ -79,6 +77,24 @@ public class LoanService {
                             "Unknown status: " + request.getStatus()));
             loan.setStatus(loanStatus);
         }
+
+        Loan savedLoan = loanRepository.save(loan);
+        return loanMapper.toDto(savedLoan);
+    }
+
+    public LoanDto closeLoan(Long loanId) {
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new LoanNotFoundException(loanId));
+
+        if (STATUS_CLOSED.equals(loan.getStatus().getName())) {
+            throw new LoanAlreadyClosedException(loanId);
+        }
+
+        LoanStatus closedStatus = loanStatusRepository.findByName(STATUS_CLOSED)
+                .orElseThrow(() -> new IllegalStateException(
+                        STATUS_CLOSED + " status not found"));
+
+        loan.setStatus(closedStatus);
 
         Loan savedLoan = loanRepository.save(loan);
         return loanMapper.toDto(savedLoan);
