@@ -9,10 +9,7 @@ import ru.ilya.power.creditmanager.dto.loan.CreateLoanRequest;
 import ru.ilya.power.creditmanager.dto.loan.LoanDto;
 import ru.ilya.power.creditmanager.dto.loan.UpdateLoanRequest;
 import ru.ilya.power.creditmanager.entity.*;
-import ru.ilya.power.creditmanager.exception.ClientNotActiveException;
-import ru.ilya.power.creditmanager.exception.ClientNotFoundException;
-import ru.ilya.power.creditmanager.exception.DuplicateLoanNumberException;
-import ru.ilya.power.creditmanager.exception.LoanNotFoundException;
+import ru.ilya.power.creditmanager.exception.*;
 import ru.ilya.power.creditmanager.mapper.LoanMapper;
 import ru.ilya.power.creditmanager.repository.ClientRepository;
 import ru.ilya.power.creditmanager.repository.CurrencyRepository;
@@ -201,4 +198,53 @@ class LoanServiceTest {
         assertThat(loan.getAmount()).isEqualTo(BigInteger.valueOf(300000));
     }
 
+    @Test
+    void closeLoan_success() {
+        LoanStatus activeStatus = new LoanStatus();
+        activeStatus.setName("ACTIVE");
+
+        LoanStatus closedStatus = new LoanStatus();
+        closedStatus.setName("CLOSED");
+
+        Loan loan = new Loan();
+        loan.setId(1L);
+        loan.setStatus(activeStatus);
+
+        LoanDto expectedDto = new LoanDto();
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanStatusRepository.findByName("CLOSED")).thenReturn(Optional.of(closedStatus));
+        when(loanRepository.save(any())).thenReturn(loan);
+        when(loanMapper.toDto(loan)).thenReturn(expectedDto);
+
+        LoanDto result = loanService.closeLoan(1L);
+
+        assertThat(result).isEqualTo(expectedDto);
+        assertThat(loan.getStatus().getName()).isEqualTo("CLOSED");
+    }
+
+    @Test
+    void closeLoan_loanNotFound() {
+        when(loanRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> loanService.closeLoan(99L))
+                .isInstanceOf(LoanNotFoundException.class)
+                .hasMessageContaining("99");
+    }
+
+    @Test
+    void closeLoan_alreadyClosed() {
+        LoanStatus closedStatus = new LoanStatus();
+        closedStatus.setName("CLOSED");
+
+        Loan loan = new Loan();
+        loan.setId(1L);
+        loan.setStatus(closedStatus);
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+
+        assertThatThrownBy(() -> loanService.closeLoan(1L))
+                .isInstanceOf(LoanAlreadyClosedException.class)
+                .hasMessageContaining("1");
+    }
 }
