@@ -63,6 +63,12 @@ public class LoanService {
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new LoanNotFoundException(loanId));
 
+        Client client = loan.getClient();
+
+        if (CLIENT_ID_STATUS_CLOSED.equals(client.getStatus().getId())) {
+            throw new ClientStatusClosedException(client.getId());
+        }
+
         if (request.getAmount() != null) {
             loan.setAmount(request.getAmount());
         }
@@ -71,10 +77,9 @@ public class LoanService {
             loan.setInterestRate(request.getInterestRate());
         }
 
-        if (request.getStatus() != null) {
-            LoanStatus loanStatus = loanStatusRepository.findByName(request.getStatus())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Unknown status: " + request.getStatus()));
+        if (request.getStatusId() != null) {
+            LoanStatus loanStatus = loanStatusRepository.findById(request.getStatusId())
+                    .orElseThrow(() -> new LoanStatusNotFoundException(request.getStatusId()));
             loan.setStatus(loanStatus);
         }
 
