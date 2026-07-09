@@ -20,9 +20,6 @@ import ru.ilya.power.creditmanager.repository.LoanStatusRepository;
 @RequiredArgsConstructor
 public class LoanService {
 
-    private static final String CLIENT_STATUS_ACTIVE = "ACTIVE";
-    private static final String CLIENT_STATUS_DRAFT = "DRAFT";
-    private static final String STATUS_CLOSED = "CLOSED";
     private static final Long CLIENT_ID_STATUS_ACTIVE = 1L;
     private static final Long CLIENT_ID_STATUS_CLOSED = 3L;
     private static final Long LOAN_ID_STATUS_DRAFT = 1L;
