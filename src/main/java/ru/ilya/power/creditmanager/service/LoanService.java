@@ -23,6 +23,9 @@ public class LoanService {
     private static final String CLIENT_STATUS_ACTIVE = "ACTIVE";
     private static final String CLIENT_STATUS_DRAFT = "DRAFT";
     private static final String STATUS_CLOSED = "CLOSED";
+    private static final Long CLIENT_ID_STATUS_ACTIVE = 1L;
+    private static final Long CLIENT_ID_STATUS_CLOSED = 3L;
+    private static final Long LOAN_ID_STATUS_DRAFT = 1L;
     private static final Long LOAN_ID_STATUS_CLOSED = 3L;
 
     private final LoanRepository loanRepository;
@@ -36,7 +39,7 @@ public class LoanService {
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ClientNotFoundException(clientId));
 
-        if (!CLIENT_STATUS_ACTIVE.equals(client.getStatus().getName())) {
+        if (!CLIENT_ID_STATUS_ACTIVE.equals(client.getStatus().getId())) {
             throw new ClientNotActiveException(clientId);
         }
 
@@ -44,12 +47,11 @@ public class LoanService {
             throw new DuplicateLoanNumberException(request.getLoanNumber());
         }
 
-        Currency currency = currencyRepository.findByCode(request.getCurrency())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Unknown currency: " + request.getCurrency()));
+        Currency currency = currencyRepository.findById(request.getCurrencyId())
+                .orElseThrow(() -> new CurrencyNotFoundException(request.getCurrencyId()));
 
-        LoanStatus draftStatus = loanStatusRepository.findByName(CLIENT_STATUS_DRAFT)
-                .orElseThrow(() -> new IllegalStateException(CLIENT_STATUS_DRAFT + " status not found"));
+        LoanStatus draftStatus = loanStatusRepository.findById(LOAN_ID_STATUS_DRAFT)
+                .orElseThrow(() -> new LoanStatusNotFoundException(LOAN_ID_STATUS_DRAFT));
 
         Loan loan = loanMapper.toEntity(request);
         loan.setClient(client);

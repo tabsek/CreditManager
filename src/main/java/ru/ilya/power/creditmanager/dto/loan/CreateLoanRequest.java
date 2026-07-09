@@ -16,8 +16,8 @@ public class CreateLoanRequest {
     @NotBlank
     private String loanNumber;
 
-    @NotBlank
-    private String currency;
+    @NotNull
+    private Long currencyId;
 
     @NotNull
     @Positive

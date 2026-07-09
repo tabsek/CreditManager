@@ -28,11 +28,12 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class LoanServiceTest {
 
-    // Константы соответствуют ID в справочных таблицах
     private static final Long ACTIVE_CLIENT_STATUS_ID = 1L;
+    private static final Long CLOSED_CLIENT_STATUS_ID = 3L;
     private static final Long DRAFT_LOAN_STATUS_ID = 1L;
     private static final Long ACTIVE_LOAN_STATUS_ID = 2L;
     private static final Long CLOSED_LOAN_STATUS_ID = 3L;
+    private static final Long RUB_CURRENCY_ID = 1L;
 
     @Mock
     private LoanRepository loanRepository;
@@ -63,13 +64,14 @@ class LoanServiceTest {
 
         CreateLoanRequest request = new CreateLoanRequest();
         request.setLoanNumber("TT-TEST-001");
-        request.setCurrency("RUB");
+        request.setCurrencyId(RUB_CURRENCY_ID);
         request.setAmount(BigInteger.valueOf(100000));
         request.setInterestRate(BigDecimal.valueOf(12.5));
         request.setTermMonths(12);
         request.setMonthlyPayment(BigDecimal.valueOf(9000));
 
         Currency currency = new Currency();
+        currency.setId(RUB_CURRENCY_ID);
         currency.setCode("RUB");
 
         LoanStatus draftStatus = new LoanStatus();
@@ -80,7 +82,7 @@ class LoanServiceTest {
 
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
         when(loanRepository.existsByLoanNumber("TT-TEST-001")).thenReturn(false);
-        when(currencyRepository.findByCode("RUB")).thenReturn(Optional.of(currency));
+        when(currencyRepository.findById(RUB_CURRENCY_ID)).thenReturn(Optional.of(currency));
         when(loanStatusRepository.findById(DRAFT_LOAN_STATUS_ID)).thenReturn(Optional.of(draftStatus));
         when(loanMapper.toEntity(request)).thenReturn(savedLoan);
         when(loanRepository.save(any())).thenReturn(savedLoan);
@@ -103,7 +105,7 @@ class LoanServiceTest {
     @Test
     void createLoan_clientNotActive() {
         ClientStatus blockedStatus = new ClientStatus();
-        blockedStatus.setId(2L); // не ACTIVE (1L)
+        blockedStatus.setId(2L);
 
         Client client = new Client();
         client.setId(1L);
@@ -133,6 +135,27 @@ class LoanServiceTest {
         assertThatThrownBy(() -> loanService.createLoan(1L, request))
                 .isInstanceOf(DuplicateLoanNumberException.class)
                 .hasMessageContaining("LN-2024-001");
+    }
+
+    @Test
+    void createLoan_currencyNotFound() {
+        ClientStatus activeStatus = new ClientStatus();
+        activeStatus.setId(ACTIVE_CLIENT_STATUS_ID);
+
+        Client client = new Client();
+        client.setId(1L);
+        client.setStatus(activeStatus);
+
+        CreateLoanRequest request = new CreateLoanRequest();
+        request.setLoanNumber("TT-TEST-001");
+        request.setCurrencyId(999L);
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(loanRepository.existsByLoanNumber("TT-TEST-001")).thenReturn(false);
+        when(currencyRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> loanService.createLoan(1L, request))
+                .isInstanceOf(CurrencyNotFoundException.class);
     }
 
     @Test
@@ -177,7 +200,7 @@ class LoanServiceTest {
         loan.setId(1L);
 
         UpdateLoanRequest request = new UpdateLoanRequest();
-        request.setStatusId(999L); // несуществующий ID
+        request.setStatusId(999L);
 
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(loanStatusRepository.findById(999L)).thenReturn(Optional.empty());
@@ -210,9 +233,15 @@ class LoanServiceTest {
 
     @Test
     void closeLoan_success() {
+        ClientStatus activeClientStatus = new ClientStatus();
+        activeClientStatus.setId(ACTIVE_CLIENT_STATUS_ID);
+
+        Client client = new Client();
+        client.setId(1L);
+        client.setStatus(activeClientStatus);
+
         LoanStatus activeStatus = new LoanStatus();
-        activeStatus.setId(ACTIVE_LOAN_STATUS_ID); // не CLOSED (3L)
-        activeStatus.setName("ACTIVE");
+        activeStatus.setId(ACTIVE_LOAN_STATUS_ID);
 
         LoanStatus closedStatus = new LoanStatus();
         closedStatus.setId(CLOSED_LOAN_STATUS_ID);
@@ -220,6 +249,7 @@ class LoanServiceTest {
 
         Loan loan = new Loan();
         loan.setId(1L);
+        loan.setClient(client);
         loan.setStatus(activeStatus);
 
         LoanDto expectedDto = new LoanDto();
@@ -236,6 +266,30 @@ class LoanServiceTest {
     }
 
     @Test
+    void closeLoan_clientStatusClosed() {
+        ClientStatus closedClientStatus = new ClientStatus();
+        closedClientStatus.setId(CLOSED_CLIENT_STATUS_ID);
+
+        Client client = new Client();
+        client.setId(1L);
+        client.setStatus(closedClientStatus);
+
+        LoanStatus activeStatus = new LoanStatus();
+        activeStatus.setId(ACTIVE_LOAN_STATUS_ID);
+
+        Loan loan = new Loan();
+        loan.setId(1L);
+        loan.setClient(client);
+        loan.setStatus(activeStatus);
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+
+        assertThatThrownBy(() -> loanService.closeLoan(1L))
+                .isInstanceOf(ClientStatusClosedException.class)
+                .hasMessageContaining("1");
+    }
+
+    @Test
     void closeLoan_loanNotFound() {
         when(loanRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -246,11 +300,19 @@ class LoanServiceTest {
 
     @Test
     void closeLoan_alreadyClosed() {
+        ClientStatus activeClientStatus = new ClientStatus();
+        activeClientStatus.setId(ACTIVE_CLIENT_STATUS_ID);
+
+        Client client = new Client();
+        client.setId(1L);
+        client.setStatus(activeClientStatus);
+
         LoanStatus closedStatus = new LoanStatus();
-        closedStatus.setId(CLOSED_LOAN_STATUS_ID); // ID = 3L
+        closedStatus.setId(CLOSED_LOAN_STATUS_ID);
 
         Loan loan = new Loan();
         loan.setId(1L);
+        loan.setClient(client);
         loan.setStatus(closedStatus);
 
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
