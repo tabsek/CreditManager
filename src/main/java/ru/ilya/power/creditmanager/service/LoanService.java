@@ -20,10 +20,10 @@ import ru.ilya.power.creditmanager.repository.LoanStatusRepository;
 @RequiredArgsConstructor
 public class LoanService {
 
-    private static final Long CLIENT_ID_STATUS_ACTIVE = 1L;
-    private static final Long CLIENT_ID_STATUS_CLOSED = 3L;
-    private static final Long LOAN_ID_STATUS_DRAFT = 1L;
-    private static final Long LOAN_ID_STATUS_CLOSED = 3L;
+    private static final Long ACTIVE_CLIENT_STATUS_ID = 1L;
+    private static final Long CLOSED_CLIENT_STATUS_ID = 3L;
+    private static final Long DRAFT_LOAN_STATUS_ID = 1L;
+    private static final Long CLOSED_LOAN_STATUS_ID = 3L;
 
     private final LoanRepository loanRepository;
     private final ClientRepository clientRepository;
@@ -36,7 +36,7 @@ public class LoanService {
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ClientNotFoundException(clientId));
 
-        if (!CLIENT_ID_STATUS_ACTIVE.equals(client.getStatus().getId())) {
+        if (!ACTIVE_CLIENT_STATUS_ID.equals(client.getStatus().getId())) {
             throw new ClientNotActiveException(clientId);
         }
 
@@ -47,8 +47,8 @@ public class LoanService {
         Currency currency = currencyRepository.findById(request.getCurrencyId())
                 .orElseThrow(() -> new CurrencyNotFoundException(request.getCurrencyId()));
 
-        LoanStatus draftStatus = loanStatusRepository.findById(LOAN_ID_STATUS_DRAFT)
-                .orElseThrow(() -> new LoanStatusNotFoundException(LOAN_ID_STATUS_DRAFT));
+        LoanStatus draftStatus = loanStatusRepository.findById(DRAFT_LOAN_STATUS_ID)
+                .orElseThrow(() -> new LoanStatusNotFoundException(DRAFT_LOAN_STATUS_ID));
 
         Loan loan = loanMapper.toEntity(request);
         loan.setClient(client);
@@ -65,7 +65,7 @@ public class LoanService {
 
         Client client = loan.getClient();
 
-        if (CLIENT_ID_STATUS_CLOSED.equals(client.getStatus().getId())) {
+        if (CLOSED_CLIENT_STATUS_ID.equals(client.getStatus().getId())) {
             throw new ClientStatusClosedException(client.getId());
         }
 
@@ -93,16 +93,16 @@ public class LoanService {
 
         Client client = loan.getClient();
 
-        if (CLIENT_ID_STATUS_CLOSED.equals(client.getStatus().getId())) {
+        if (CLOSED_CLIENT_STATUS_ID.equals(client.getStatus().getId())) {
             throw new ClientStatusClosedException(client.getId());
         }
 
-        if (LOAN_ID_STATUS_CLOSED.equals(loan.getStatus().getId())) {
+        if (CLOSED_LOAN_STATUS_ID.equals(loan.getStatus().getId())) {
             throw new LoanAlreadyClosedException(loanId);
         }
 
-        LoanStatus closedStatus = loanStatusRepository.findById(LOAN_ID_STATUS_CLOSED)
-                .orElseThrow(() -> new LoanStatusNotFoundException(LOAN_ID_STATUS_CLOSED));
+        LoanStatus closedStatus = loanStatusRepository.findById(CLOSED_LOAN_STATUS_ID)
+                .orElseThrow(() -> new LoanStatusNotFoundException(CLOSED_LOAN_STATUS_ID));
 
         loan.setStatus(closedStatus);
 
