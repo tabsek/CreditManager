@@ -28,6 +28,12 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class LoanServiceTest {
 
+    // Константы соответствуют ID в справочных таблицах
+    private static final Long ACTIVE_CLIENT_STATUS_ID = 1L;
+    private static final Long DRAFT_LOAN_STATUS_ID = 1L;
+    private static final Long ACTIVE_LOAN_STATUS_ID = 2L;
+    private static final Long CLOSED_LOAN_STATUS_ID = 3L;
+
     @Mock
     private LoanRepository loanRepository;
 
@@ -48,9 +54,10 @@ class LoanServiceTest {
 
     @Test
     void createLoan_success() {
-        Client client = new Client();
         ClientStatus activeStatus = new ClientStatus();
-        activeStatus.setName("ACTIVE");
+        activeStatus.setId(ACTIVE_CLIENT_STATUS_ID);
+
+        Client client = new Client();
         client.setId(1L);
         client.setStatus(activeStatus);
 
@@ -66,7 +73,7 @@ class LoanServiceTest {
         currency.setCode("RUB");
 
         LoanStatus draftStatus = new LoanStatus();
-        draftStatus.setName("DRAFT");
+        draftStatus.setId(DRAFT_LOAN_STATUS_ID);
 
         Loan savedLoan = new Loan();
         LoanDto expectedDto = new LoanDto();
@@ -74,7 +81,7 @@ class LoanServiceTest {
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
         when(loanRepository.existsByLoanNumber("TT-TEST-001")).thenReturn(false);
         when(currencyRepository.findByCode("RUB")).thenReturn(Optional.of(currency));
-        when(loanStatusRepository.findByName("DRAFT")).thenReturn(Optional.of(draftStatus));
+        when(loanStatusRepository.findById(DRAFT_LOAN_STATUS_ID)).thenReturn(Optional.of(draftStatus));
         when(loanMapper.toEntity(request)).thenReturn(savedLoan);
         when(loanRepository.save(any())).thenReturn(savedLoan);
         when(loanMapper.toDto(savedLoan)).thenReturn(expectedDto);
@@ -95,9 +102,10 @@ class LoanServiceTest {
 
     @Test
     void createLoan_clientNotActive() {
-        Client client = new Client();
         ClientStatus blockedStatus = new ClientStatus();
-        blockedStatus.setName("BLOCKED");
+        blockedStatus.setId(2L); // не ACTIVE (1L)
+
+        Client client = new Client();
         client.setId(1L);
         client.setStatus(blockedStatus);
 
@@ -110,9 +118,10 @@ class LoanServiceTest {
 
     @Test
     void createLoan_duplicateLoanNumber() {
-        Client client = new Client();
         ClientStatus activeStatus = new ClientStatus();
-        activeStatus.setName("ACTIVE");
+        activeStatus.setId(ACTIVE_CLIENT_STATUS_ID);
+
+        Client client = new Client();
         client.setStatus(activeStatus);
 
         CreateLoanRequest request = new CreateLoanRequest();
@@ -129,6 +138,7 @@ class LoanServiceTest {
     @Test
     void updateLoan_success() {
         LoanStatus activeStatus = new LoanStatus();
+        activeStatus.setId(ACTIVE_LOAN_STATUS_ID);
         activeStatus.setName("ACTIVE");
 
         Loan loan = new Loan();
@@ -138,12 +148,12 @@ class LoanServiceTest {
         UpdateLoanRequest request = new UpdateLoanRequest();
         request.setAmount(BigInteger.valueOf(200000));
         request.setInterestRate(BigDecimal.valueOf(15.0));
-        request.setStatus("ACTIVE");
+        request.setStatusId(ACTIVE_LOAN_STATUS_ID);
 
         LoanDto expectedDto = new LoanDto();
 
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
-        when(loanStatusRepository.findByName("ACTIVE")).thenReturn(Optional.of(activeStatus));
+        when(loanStatusRepository.findById(ACTIVE_LOAN_STATUS_ID)).thenReturn(Optional.of(activeStatus));
         when(loanRepository.save(any())).thenReturn(loan);
         when(loanMapper.toDto(loan)).thenReturn(expectedDto);
 
@@ -167,14 +177,14 @@ class LoanServiceTest {
         loan.setId(1L);
 
         UpdateLoanRequest request = new UpdateLoanRequest();
-        request.setStatus("UNKNOWN");
+        request.setStatusId(999L); // несуществующий ID
 
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
-        when(loanStatusRepository.findByName("UNKNOWN")).thenReturn(Optional.empty());
+        when(loanStatusRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> loanService.updateLoan(1L, request))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("UNKNOWN");
+                .hasMessageContaining("999");
     }
 
     @Test
@@ -201,9 +211,11 @@ class LoanServiceTest {
     @Test
     void closeLoan_success() {
         LoanStatus activeStatus = new LoanStatus();
+        activeStatus.setId(ACTIVE_LOAN_STATUS_ID); // не CLOSED (3L)
         activeStatus.setName("ACTIVE");
 
         LoanStatus closedStatus = new LoanStatus();
+        closedStatus.setId(CLOSED_LOAN_STATUS_ID);
         closedStatus.setName("CLOSED");
 
         Loan loan = new Loan();
@@ -213,14 +225,14 @@ class LoanServiceTest {
         LoanDto expectedDto = new LoanDto();
 
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
-        when(loanStatusRepository.findByName("CLOSED")).thenReturn(Optional.of(closedStatus));
+        when(loanStatusRepository.findById(CLOSED_LOAN_STATUS_ID)).thenReturn(Optional.of(closedStatus));
         when(loanRepository.save(any())).thenReturn(loan);
         when(loanMapper.toDto(loan)).thenReturn(expectedDto);
 
         LoanDto result = loanService.closeLoan(1L);
 
         assertThat(result).isEqualTo(expectedDto);
-        assertThat(loan.getStatus().getName()).isEqualTo("CLOSED");
+        assertThat(loan.getStatus().getId()).isEqualTo(CLOSED_LOAN_STATUS_ID);
     }
 
     @Test
@@ -235,7 +247,7 @@ class LoanServiceTest {
     @Test
     void closeLoan_alreadyClosed() {
         LoanStatus closedStatus = new LoanStatus();
-        closedStatus.setName("CLOSED");
+        closedStatus.setId(CLOSED_LOAN_STATUS_ID); // ID = 3L
 
         Loan loan = new Loan();
         loan.setId(1L);

@@ -23,6 +23,7 @@ public class LoanService {
     private static final String CLIENT_STATUS_ACTIVE = "ACTIVE";
     private static final String CLIENT_STATUS_DRAFT = "DRAFT";
     private static final String STATUS_CLOSED = "CLOSED";
+    private static final Long LOAN_ID_STATUS_CLOSED = 3L;
 
     private final LoanRepository loanRepository;
     private final ClientRepository clientRepository;
@@ -86,13 +87,18 @@ public class LoanService {
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new LoanNotFoundException(loanId));
 
-        if (STATUS_CLOSED.equals(loan.getStatus().getName())) {
+        Client client = loan.getClient();
+
+        if (CLIENT_ID_STATUS_CLOSED.equals(client.getStatus().getId())) {
+            throw new ClientStatusClosedException(client.getId());
+        }
+
+        if (LOAN_ID_STATUS_CLOSED.equals(loan.getStatus().getId())) {
             throw new LoanAlreadyClosedException(loanId);
         }
 
-        LoanStatus closedStatus = loanStatusRepository.findByName(STATUS_CLOSED)
-                .orElseThrow(() -> new IllegalStateException(
-                        STATUS_CLOSED + " status not found"));
+        LoanStatus closedStatus = loanStatusRepository.findById(LOAN_ID_STATUS_CLOSED)
+                .orElseThrow(() -> new LoanStatusNotFoundException(LOAN_ID_STATUS_CLOSED));
 
         loan.setStatus(closedStatus);
 

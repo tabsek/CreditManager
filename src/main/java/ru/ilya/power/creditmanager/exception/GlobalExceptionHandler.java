@@ -65,4 +65,18 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse(ex.getMessage()));
     }
+
+    @ExceptionHandler(LoanStatusNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleLoanStatusNotFound(LoanStatusNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ClientStatusClosedException.class)
+    public ResponseEntity<ErrorResponse> handleClientWithStatusClosed(ClientStatusClosedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
 }
