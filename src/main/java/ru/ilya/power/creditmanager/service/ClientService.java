@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.ilya.power.creditmanager.dto.client.ClientCardDto;
 import ru.ilya.power.creditmanager.dto.client.ClientDto;
 import ru.ilya.power.creditmanager.entity.Client;
+import ru.ilya.power.creditmanager.exception.ClientNotFoundException;
 import ru.ilya.power.creditmanager.mapper.ClientMapper;
 import ru.ilya.power.creditmanager.repository.ClientRepository;
 
@@ -37,7 +38,7 @@ public class ClientService {
 
     public ClientCardDto getClientCard(Long id) {
         Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client not found: " + id));
+                .orElseThrow(() -> new ClientNotFoundException(id));
         return clientMapper.toCardDto(client);
     }
 }
