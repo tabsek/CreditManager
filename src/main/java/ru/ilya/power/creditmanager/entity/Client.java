@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDate;
-import java.util.List;
 
 @Getter
 @Setter
@@ -31,13 +30,10 @@ public class Client {
     @Column(name = "passport_number", nullable = false, unique = true, length = 20)
     private String passportNumber;
 
-    @Column(name = "email", nullable = false, unique = true, length = 255)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
     @ManyToOne
     @JoinColumn(name = "status", nullable = false)
     private ClientStatus status;
-
-    @OneToMany(mappedBy = "client", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<Loan> loans;
 }

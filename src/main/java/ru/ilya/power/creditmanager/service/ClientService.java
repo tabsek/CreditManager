@@ -4,10 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.ilya.power.creditmanager.dto.client.ClientCardDto;
 import ru.ilya.power.creditmanager.dto.client.ClientDto;
+import ru.ilya.power.creditmanager.dto.loan.LoanDto;
 import ru.ilya.power.creditmanager.entity.Client;
 import ru.ilya.power.creditmanager.exception.ClientNotFoundException;
 import ru.ilya.power.creditmanager.mapper.ClientMapper;
+import ru.ilya.power.creditmanager.mapper.LoanMapper;
 import ru.ilya.power.creditmanager.repository.ClientRepository;
+import ru.ilya.power.creditmanager.repository.LoanRepository;
 
 import java.util.List;
 
@@ -16,6 +19,8 @@ import java.util.List;
 public class ClientService {
 
     private final ClientRepository clientRepository;
+    private final LoanRepository loanRepository;
+    private final LoanMapper loanMapper;
     private final ClientMapper clientMapper;
 
     public List<ClientDto> searchByName(String lastName, String firstName) {
@@ -36,9 +41,17 @@ public class ClientService {
                 .toList();
     }
 
+
     public ClientCardDto getClientCard(Long id) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new ClientNotFoundException(id));
-        return clientMapper.toCardDto(client);
+
+        ClientCardDto dto = clientMapper.toCardDto(client);
+        List<LoanDto> loans = loanRepository.findByClientId(id)
+                .stream()
+                .map(loanMapper::toDto)
+                .toList();
+        dto.setLoans(loans);
+        return dto;
     }
 }
