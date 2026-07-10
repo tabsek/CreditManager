@@ -12,5 +12,5 @@ public class UpdateLoanRequest {
 
     private BigInteger amount;
     private BigDecimal interestRate;
-    private String status;
+    private Long statusId;
 }

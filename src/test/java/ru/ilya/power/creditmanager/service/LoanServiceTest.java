@@ -28,6 +28,13 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class LoanServiceTest {
 
+    private static final Long ACTIVE_CLIENT_STATUS_ID = 1L;
+    private static final Long CLOSED_CLIENT_STATUS_ID = 3L;
+    private static final Long DRAFT_LOAN_STATUS_ID = 1L;
+    private static final Long ACTIVE_LOAN_STATUS_ID = 2L;
+    private static final Long CLOSED_LOAN_STATUS_ID = 3L;
+    private static final Long RUB_CURRENCY_ID = 1L;
+
     @Mock
     private LoanRepository loanRepository;
 
@@ -48,33 +55,35 @@ class LoanServiceTest {
 
     @Test
     void createLoan_success() {
-        Client client = new Client();
         ClientStatus activeStatus = new ClientStatus();
-        activeStatus.setName("ACTIVE");
+        activeStatus.setId(ACTIVE_CLIENT_STATUS_ID);
+
+        Client client = new Client();
         client.setId(1L);
         client.setStatus(activeStatus);
 
         CreateLoanRequest request = new CreateLoanRequest();
         request.setLoanNumber("TT-TEST-001");
-        request.setCurrency("RUB");
+        request.setCurrencyId(RUB_CURRENCY_ID);
         request.setAmount(BigInteger.valueOf(100000));
         request.setInterestRate(BigDecimal.valueOf(12.5));
         request.setTermMonths(12);
         request.setMonthlyPayment(BigDecimal.valueOf(9000));
 
         Currency currency = new Currency();
+        currency.setId(RUB_CURRENCY_ID);
         currency.setCode("RUB");
 
         LoanStatus draftStatus = new LoanStatus();
-        draftStatus.setName("DRAFT");
+        draftStatus.setId(DRAFT_LOAN_STATUS_ID);
 
         Loan savedLoan = new Loan();
         LoanDto expectedDto = new LoanDto();
 
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
         when(loanRepository.existsByLoanNumber("TT-TEST-001")).thenReturn(false);
-        when(currencyRepository.findByCode("RUB")).thenReturn(Optional.of(currency));
-        when(loanStatusRepository.findByName("DRAFT")).thenReturn(Optional.of(draftStatus));
+        when(currencyRepository.findById(RUB_CURRENCY_ID)).thenReturn(Optional.of(currency));
+        when(loanStatusRepository.findById(DRAFT_LOAN_STATUS_ID)).thenReturn(Optional.of(draftStatus));
         when(loanMapper.toEntity(request)).thenReturn(savedLoan);
         when(loanRepository.save(any())).thenReturn(savedLoan);
         when(loanMapper.toDto(savedLoan)).thenReturn(expectedDto);
@@ -95,9 +104,10 @@ class LoanServiceTest {
 
     @Test
     void createLoan_clientNotActive() {
-        Client client = new Client();
         ClientStatus blockedStatus = new ClientStatus();
-        blockedStatus.setName("BLOCKED");
+        blockedStatus.setId(2L);
+
+        Client client = new Client();
         client.setId(1L);
         client.setStatus(blockedStatus);
 
@@ -110,9 +120,10 @@ class LoanServiceTest {
 
     @Test
     void createLoan_duplicateLoanNumber() {
-        Client client = new Client();
         ClientStatus activeStatus = new ClientStatus();
-        activeStatus.setName("ACTIVE");
+        activeStatus.setId(ACTIVE_CLIENT_STATUS_ID);
+
+        Client client = new Client();
         client.setStatus(activeStatus);
 
         CreateLoanRequest request = new CreateLoanRequest();
@@ -127,8 +138,30 @@ class LoanServiceTest {
     }
 
     @Test
+    void createLoan_currencyNotFound() {
+        ClientStatus activeStatus = new ClientStatus();
+        activeStatus.setId(ACTIVE_CLIENT_STATUS_ID);
+
+        Client client = new Client();
+        client.setId(1L);
+        client.setStatus(activeStatus);
+
+        CreateLoanRequest request = new CreateLoanRequest();
+        request.setLoanNumber("TT-TEST-001");
+        request.setCurrencyId(999L);
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(loanRepository.existsByLoanNumber("TT-TEST-001")).thenReturn(false);
+        when(currencyRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> loanService.createLoan(1L, request))
+                .isInstanceOf(CurrencyNotFoundException.class);
+    }
+
+    @Test
     void updateLoan_success() {
         LoanStatus activeStatus = new LoanStatus();
+        activeStatus.setId(ACTIVE_LOAN_STATUS_ID);
         activeStatus.setName("ACTIVE");
 
         Loan loan = new Loan();
@@ -138,12 +171,12 @@ class LoanServiceTest {
         UpdateLoanRequest request = new UpdateLoanRequest();
         request.setAmount(BigInteger.valueOf(200000));
         request.setInterestRate(BigDecimal.valueOf(15.0));
-        request.setStatus("ACTIVE");
+        request.setStatusId(ACTIVE_LOAN_STATUS_ID);
 
         LoanDto expectedDto = new LoanDto();
 
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
-        when(loanStatusRepository.findByName("ACTIVE")).thenReturn(Optional.of(activeStatus));
+        when(loanStatusRepository.findById(ACTIVE_LOAN_STATUS_ID)).thenReturn(Optional.of(activeStatus));
         when(loanRepository.save(any())).thenReturn(loan);
         when(loanMapper.toDto(loan)).thenReturn(expectedDto);
 
@@ -167,14 +200,14 @@ class LoanServiceTest {
         loan.setId(1L);
 
         UpdateLoanRequest request = new UpdateLoanRequest();
-        request.setStatus("UNKNOWN");
+        request.setStatusId(999L);
 
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
-        when(loanStatusRepository.findByName("UNKNOWN")).thenReturn(Optional.empty());
+        when(loanStatusRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> loanService.updateLoan(1L, request))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("UNKNOWN");
+                .hasMessageContaining("999");
     }
 
     @Test
@@ -200,27 +233,60 @@ class LoanServiceTest {
 
     @Test
     void closeLoan_success() {
+        ClientStatus activeClientStatus = new ClientStatus();
+        activeClientStatus.setId(ACTIVE_CLIENT_STATUS_ID);
+
+        Client client = new Client();
+        client.setId(1L);
+        client.setStatus(activeClientStatus);
+
         LoanStatus activeStatus = new LoanStatus();
-        activeStatus.setName("ACTIVE");
+        activeStatus.setId(ACTIVE_LOAN_STATUS_ID);
 
         LoanStatus closedStatus = new LoanStatus();
+        closedStatus.setId(CLOSED_LOAN_STATUS_ID);
         closedStatus.setName("CLOSED");
 
         Loan loan = new Loan();
         loan.setId(1L);
+        loan.setClient(client);
         loan.setStatus(activeStatus);
 
         LoanDto expectedDto = new LoanDto();
 
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
-        when(loanStatusRepository.findByName("CLOSED")).thenReturn(Optional.of(closedStatus));
+        when(loanStatusRepository.findById(CLOSED_LOAN_STATUS_ID)).thenReturn(Optional.of(closedStatus));
         when(loanRepository.save(any())).thenReturn(loan);
         when(loanMapper.toDto(loan)).thenReturn(expectedDto);
 
         LoanDto result = loanService.closeLoan(1L);
 
         assertThat(result).isEqualTo(expectedDto);
-        assertThat(loan.getStatus().getName()).isEqualTo("CLOSED");
+        assertThat(loan.getStatus().getId()).isEqualTo(CLOSED_LOAN_STATUS_ID);
+    }
+
+    @Test
+    void closeLoan_clientStatusClosed() {
+        ClientStatus closedClientStatus = new ClientStatus();
+        closedClientStatus.setId(CLOSED_CLIENT_STATUS_ID);
+
+        Client client = new Client();
+        client.setId(1L);
+        client.setStatus(closedClientStatus);
+
+        LoanStatus activeStatus = new LoanStatus();
+        activeStatus.setId(ACTIVE_LOAN_STATUS_ID);
+
+        Loan loan = new Loan();
+        loan.setId(1L);
+        loan.setClient(client);
+        loan.setStatus(activeStatus);
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+
+        assertThatThrownBy(() -> loanService.closeLoan(1L))
+                .isInstanceOf(ClientStatusClosedException.class)
+                .hasMessageContaining("1");
     }
 
     @Test
@@ -234,11 +300,19 @@ class LoanServiceTest {
 
     @Test
     void closeLoan_alreadyClosed() {
+        ClientStatus activeClientStatus = new ClientStatus();
+        activeClientStatus.setId(ACTIVE_CLIENT_STATUS_ID);
+
+        Client client = new Client();
+        client.setId(1L);
+        client.setStatus(activeClientStatus);
+
         LoanStatus closedStatus = new LoanStatus();
-        closedStatus.setName("CLOSED");
+        closedStatus.setId(CLOSED_LOAN_STATUS_ID);
 
         Loan loan = new Loan();
         loan.setId(1L);
+        loan.setClient(client);
         loan.setStatus(closedStatus);
 
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));

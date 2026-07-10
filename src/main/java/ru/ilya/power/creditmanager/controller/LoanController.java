@@ -35,7 +35,7 @@ public class LoanController {
         return ResponseEntity.ok(loanService.updateLoan(loanId, request));
     }
 
-    @PostMapping("/{loanId}/close")
+    @PatchMapping("/{loanId}/close")
     public ResponseEntity<LoanDto> closeLoan(@PathVariable Long loanId) {
         return ResponseEntity.ok(loanService.closeLoan(loanId));
     }
