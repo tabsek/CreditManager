@@ -54,4 +54,5 @@ public class ClientService {
         dto.setLoans(loans);
         return dto;
     }
+
 }
