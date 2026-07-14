@@ -2,6 +2,7 @@ package ru.ilya.power.creditmanager.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.ilya.power.creditmanager.dto.loan.CreateLoanRequest;
 import ru.ilya.power.creditmanager.dto.loan.LoanDto;
 import ru.ilya.power.creditmanager.dto.loan.UpdateLoanRequest;
@@ -31,6 +32,7 @@ public class LoanService {
     private final LoanStatusRepository loanStatusRepository;
     private final LoanMapper loanMapper;
 
+    @Transactional
     public LoanDto createLoan(Long clientId, CreateLoanRequest request) {
 
         Client client = clientRepository.findById(clientId)
@@ -59,6 +61,7 @@ public class LoanService {
         return loanMapper.toDto(savedLoan);
     }
 
+    @Transactional
     public LoanDto updateLoan(Long loanId, UpdateLoanRequest request) {
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new LoanNotFoundException(loanId));
@@ -87,6 +90,7 @@ public class LoanService {
         return loanMapper.toDto(savedLoan);
     }
 
+    @Transactional
     public LoanDto closeLoan(Long loanId) {
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new LoanNotFoundException(loanId));

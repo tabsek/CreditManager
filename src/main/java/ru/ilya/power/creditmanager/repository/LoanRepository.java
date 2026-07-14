@@ -10,4 +10,6 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     boolean existsByLoanNumber(String loanNumber);
 
     List<Loan> findByClientId(Long clientId);
+
+    boolean existsByClientIdAndStatusIdNot(Long clientId, Long statusId);
 }

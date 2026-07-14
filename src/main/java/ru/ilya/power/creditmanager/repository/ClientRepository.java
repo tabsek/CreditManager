@@ -13,4 +13,8 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
     );
 
     List<Client> findByPassportNumber(String passportNumber);
+
+    boolean existsByPassportNumber(String passportNumber);
+
+    boolean existsByEmail(String email);
 }

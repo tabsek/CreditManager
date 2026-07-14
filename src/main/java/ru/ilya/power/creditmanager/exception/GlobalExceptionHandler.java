@@ -86,4 +86,41 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(ex.getMessage()));
     }
+
+    @ExceptionHandler(ClientAlreadyBlockedException.class)
+    public ResponseEntity<ErrorResponse> handleClientAlreadyBlocked(ClientAlreadyBlockedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ClientHasActiveLoansException.class)
+    public ResponseEntity<ErrorResponse> handleClientHasActiveLoans(ClientHasActiveLoansException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicatePassportNumberException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicatePassportNumber(
+            DuplicatePassportNumberException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateEmailException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateEmail(DuplicateEmailException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ClientStatusNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleClientStatusNotFound(
+            ClientStatusNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
 }

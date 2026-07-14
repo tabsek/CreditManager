@@ -1,10 +1,14 @@
 package ru.ilya.power.creditmanager.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.ilya.power.creditmanager.dto.client.ClientCardDto;
 import ru.ilya.power.creditmanager.dto.client.ClientDto;
+import ru.ilya.power.creditmanager.dto.client.CreateClientRequest;
+import ru.ilya.power.creditmanager.dto.client.UpdateClientRequest;
 import ru.ilya.power.creditmanager.exception.ValidationException;
 import ru.ilya.power.creditmanager.service.ClientService;
 
@@ -53,5 +57,22 @@ public class ClientController {
     @GetMapping("/{id}")
     public ResponseEntity<ClientCardDto> getClientCard(@PathVariable Long id) {
         return ResponseEntity.ok(clientService.getClientCard(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<ClientDto> createClient(
+            @Valid @RequestBody CreateClientRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(clientService.createClient(request));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<ClientDto> updateClient(
+            @PathVariable Long id,
+            @RequestBody UpdateClientRequest request
+    ) {
+        return ResponseEntity.ok(clientService.updateClient(id, request));
     }
 }
